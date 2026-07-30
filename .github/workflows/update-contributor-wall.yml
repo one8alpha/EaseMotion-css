@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: contributor-wall
-  cancel-in-progress: false   # queue runs, never cancel — ensures every merge counts
+  cancel-in-progress: false
 
 jobs:
   update-wall:
@@ -19,8 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          ref: main           # always fetch the latest main, not the triggering commit
+          ref: main
 
       - name: Fetch all contributors
         env:
@@ -29,8 +28,15 @@ jobs:
           gh api "repos/${{ github.repository }}/contributors?per_page=100" > /tmp/contributors.json
           echo "Contributors fetched successfully."
 
-      - name: Pull latest before building
-        run: git pull --rebase origin main
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
       - name: Build contributor wall
         run: python3 scripts/build-contributor-wall.py
@@ -40,4 +46,3 @@ jobs:
         with:
           commit_message: "chore: update contributor wall [skip ci]"
           file_pattern: README.md
-          push_options: --force-with-lease
